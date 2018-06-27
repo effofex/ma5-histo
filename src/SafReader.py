@@ -36,6 +36,9 @@ def read(fileLoc):
     descLine =  0
     statsLine = 0
     
+    # data is also line dependent, but very mildly, need to know line # to 
+    # determine the bin # and range
+    dataLine = 0
 
     readState = NONHISTO
     #TODO handle unavailable files
@@ -104,18 +107,16 @@ def read(fileLoc):
                     if(descLine==0):
                         m=re.search('"(.*)"',l)
                         hName = m.group(1)
-                        descLine=1
-                    elif(descLine==1):
-                        descLine=2
+                        print("\t\tName: " + hName)
                     elif(descLine==2):
                         nbins,xmin,xmax=l.split()
-                        descLine=3
-                    elif(descLine==3):
-                        descLine=4
+                        print("\t\tbins: " + nbins)
+                        print("\t\tmin: " + xmin)
+                        print("\t\tmax: " + xmax)
                     elif(descLine==4):
                         regions = l.split()[0]
-                        print(regions)
-                        descLine=5
+                        print("\t\tRegion: " + regions)
+                    descLine = descLine + 1
             # Handle a <Statistics> element. Assumes we  go back to a parent
             # <Histo> element when done.
             elif(readState == STATS):
@@ -132,31 +133,31 @@ def read(fileLoc):
                     if(statsLine==0):
                        lhs,rhs = map(int,l.split()[0:2])
                        nEvents = lhs-rhs
-                       print("nEvents: " + str(nEvents))                        
+                       print("\t\tnEvents: " + str(nEvents))                        
                     elif(statsLine==1):
                        lhs,rhs = map(float,l.split()[0:2])
                        normEwEvents = lhs - rhs
-                       print("normEwEvents: " + str(normEwEvents))
+                       print("\t\tnormEwEvents: " + str(normEwEvents))
                     elif(statsLine==2):
                        lhs,rhs = map(int,l.split()[0:2])
                        nEntries = lhs - rhs
-                       print("nEntries: " + str(nEntries)) 
+                       print("\t\tnEntries: " + str(nEntries)) 
                     elif(statsLine==3):
                        lhs,rhs = map(float,l.split()[0:2])
                        normEwEntries = lhs - rhs
-                       print("normEwEntries: " + str(normEwEntries))
+                       print("\t\tnormEwEntries: " + str(normEwEntries))
                     elif(statsLine==4):
                        lhs,rhs = map(float,l.split()[0:2])
                        sumWeightsSq = lhs - rhs
-                       print("sumWeightsSq: " + str(sumWeightsSq)) 
+                       print("\t\tsumWeightsSq: " + str(sumWeightsSq)) 
                     elif(statsLine==5):
                        lhs,rhs = map(float,l.split()[0:2])
                        sumValWeight = lhs - rhs
-                       print("sumValWeight: " + str(sumValWeight)) 
+                       print("\t\tsumValWeight: " + str(sumValWeight)) 
                     elif(statsLine==6):
                        lhs,rhs = map(float,l.split()[0:2])
                        sumValSqWeight = lhs - rhs
-                       print("sumValSqWeight: " + str(sumValSqWeight)) 
+                       print("\t\tsumValSqWeight: " + str(sumValSqWeight)) 
                     statsLine=statsLine+1
                     
             #TODO retain diagnostic prints as 'verbose' output option?
@@ -167,8 +168,8 @@ def read(fileLoc):
                     readState=HISTO
                     print("\tEnded Data")
                 else:
-                    todo = True                      
-                
+                    lhs,rhs = map(float,l.split()[0:2])
+                    #print(lhs-rhs)
     return pd.DataFrame()
 
 
