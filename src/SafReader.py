@@ -1,3 +1,5 @@
+import pandas as pd
+
 def read(fileLoc):
     """Utility function which parses a MadAnalysis5 *.saf file describing one 
     or more histograms and is capable of translating them to a tidy format for
@@ -13,7 +15,8 @@ def read(fileLoc):
     A pandas dataframe representing all the histogram data in a tidy,
     denormalized format
     """
-    print("SafReader.read("+fileLoc+") called")
+    
+    return pd.DataFrame()
 
 
     
