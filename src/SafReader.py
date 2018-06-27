@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import re
+from decimal import Decimal
 
 def read(fileLoc):
     """Utility function which parses a MadAnalysis5 *.saf file describing one 
@@ -41,6 +42,14 @@ def read(fileLoc):
     # determine the bin # and range
     dataLine = 0
 
+    # it's not gauranteed that we'll get a unique descriptor for each histo, so
+    # let's track an ID code
+    ID = 0
+    
+    # the list of rows we'll eventually turn into a datframe and the dictionary
+    # which represents a row (built as we go through the FSM)
+    rows = []
+    row = dict()
     readState = NONHISTO
     #TODO handle unavailable files
     with open(fileLoc) as fh:
@@ -55,6 +64,8 @@ def read(fileLoc):
             # usually this means the SAF header or footer
             if(readState == NONHISTO):
                 if(re.search('<Histo>', l)):
+                    ID = ID+1
+                    row["ID"]=ID
                     readState=HISTO
                     print("Found histogram")
             # A <Histo> tag can contain <Description>, <Statistics>, or <Data>
@@ -69,25 +80,12 @@ def read(fileLoc):
                     # need to reset the line # of the description
                     # thus the entanglement of a large FSM begins
                     descLine = 0
-                    hName = ""      # name of current histogram
-                    nbins = 0       # number of bins in current histogram 
-                    xmin = 0        # min value in current histogram
-                    xmax = 0        # max value in current histogram
-                    regions = ""    # region name (this is probaby underspecefiied)
-
                     print("\tDesc")
                 elif(re.search('<Statistics>', l)):
                     readState=STATS
                     
                     # similar element-level state reset as with description
                     statsLine = 0
-                    nEvents = 0
-                    normEwEvents = 0    # sum of event-weights over events
-                    nEntries = 0
-                    normEwEntries= 0    # sum of event-weights over entries
-                    sumWeightsSq = 0    # sum weights^2
-                    sumValWeight = 0    # sum value*weight
-                    sumValSqWeight = 0  # sum value^2*weight
                     print("\tStatistics")
                 elif(re.search('<Data>', l)):
                     readState=DATA
@@ -108,16 +106,18 @@ def read(fileLoc):
                     #TODO handle cases where these assumptions don't work
                     if(descLine==0):
                         m=re.search('"(.*)"',l)
-                        hName = m.group(1)
-                        print("\t\tName: " + hName)
+                        row["name"] = m.group(1)
+                        print("\t\tName: " + row["name"])
                     elif(descLine==2):
-                        nbins,xmin,xmax=l.split()
-                        print("\t\tbins: " + nbins)
-                        print("\t\tmin: " + xmin)
-                        print("\t\tmax: " + xmax)
+                        row["nbins"],row["xmin"],row["xmax"]=l.split()
+                        row["xmin"] = '%.6E' % Decimal(row["xmin"])
+                        row["xmax"] = '%.6E' % Decimal(row["xmax"])
+                        print("\t\tbins: " + row["nbins"])
+                        print("\t\tmin: " + row["xmin"])
+                        print("\t\tmax: " + row["xmax"])
                     elif(descLine==4):
-                        regions = l.split()[0]
-                        print("\t\tRegion: " + regions)
+                        row["region"] = l.split()[0]
+                        print("\t\tRegion: " + row["region"])
                     descLine = descLine + 1
             # Handle a <Statistics> element. Assumes we  go back to a parent
             # <Histo> element when done.
@@ -134,32 +134,32 @@ def read(fileLoc):
                     # correctly
                     if(statsLine==0):
                        lhs,rhs = map(int,l.split()[0:2])
-                       nEvents = lhs-rhs
-                       print("\t\tnEvents: " + str(nEvents))                        
+                       row["nEvents"] = lhs-rhs
+                       print("\t\tnEvents: " + str(row["nEvents"]))                        
                     elif(statsLine==1):
                        lhs,rhs = map(float,l.split()[0:2])
-                       normEwEvents = lhs - rhs
-                       print("\t\tnormEwEvents: " + str(normEwEvents))
+                       row["normEwEvents"] = '%.6E' % Decimal((lhs - rhs))
+                       print("\t\tnormEwEvents: " + str(row["normEwEvents"]))
                     elif(statsLine==2):
                        lhs,rhs = map(int,l.split()[0:2])
-                       nEntries = lhs - rhs
-                       print("\t\tnEntries: " + str(nEntries)) 
+                       row["nEntries"] = lhs - rhs
+                       print("\t\tnEntries: " + str(row["nEntries"])) 
                     elif(statsLine==3):
                        lhs,rhs = map(float,l.split()[0:2])
-                       normEwEntries = lhs - rhs
-                       print("\t\tnormEwEntries: " + str(normEwEntries))
+                       row["normEwEntries"] = '%.6E' % Decimal((lhs - rhs))
+                       print("\t\tnormEwEntries: " + str(row["normEwEntries"]))
                     elif(statsLine==4):
                        lhs,rhs = map(float,l.split()[0:2])
-                       sumWeightsSq = lhs - rhs
-                       print("\t\tsumWeightsSq: " + str(sumWeightsSq)) 
+                       row["sumWeightsSq"] = '%.6E' % Decimal((lhs - rhs))
+                       print("\t\tsumWeightsSq: " + str(row["sumWeightsSq"])) 
                     elif(statsLine==5):
                        lhs,rhs = map(float,l.split()[0:2])
-                       sumValWeight = lhs - rhs
-                       print("\t\tsumValWeight: " + str(sumValWeight)) 
+                       row["sumValWeight"] = '%.6E' % Decimal((lhs - rhs))
+                       print("\t\tsumValWeight: " + str(row["sumValWeight"])) 
                     elif(statsLine==6):
                        lhs,rhs = map(float,l.split()[0:2])
-                       sumValSqWeight = lhs - rhs
-                       print("\t\tsumValSqWeight: " + str(sumValSqWeight)) 
+                       row["sumValSqWeight"] = '%.6E' % Decimal((lhs - rhs))
+                       print("\t\tsumValSqWeight: " + str(row["sumValSqWeight"] )) 
                     statsLine=statsLine+1
                     
             #TODO retain diagnostic prints as 'verbose' output option?
@@ -175,19 +175,34 @@ def read(fileLoc):
                     print("\tEnded Data")
                 else:
                     lhs,rhs = map(float,l.split()[0:2])
-                    binWidth = ((float(xmax)-float(xmin))/float(nbins))
-                    if(dataLine==0):
+                    binWidth = ((float(row["xmax"])-float(row["xmin"]))/float(row["nbins"]))
+                    row["isUnderflow"]=(dataLine==0)
+                    row["isOverflow"]=(dataLine>float(row["nbins"]))
+                    if(row["isUnderflow"]):
                         binLbInc = -1*np.inf
-                        binUbExc = float(xmin)
-                    elif(dataLine>float(nbins)):
-                        binLbInc = float(xmax)
+                        binUbExc = float(row["xmin"])
+                        row["isUnderflow"]=True
+                    elif(row["isOverflow"]):
+                        binLbInc = float(row["xmax"])
                         binUbExc = np.inf
                     else:
-                        binLbInc = float(xmin)+binWidth*(dataLine-1)
+                        binLbInc = float(row["xmin"])+binWidth*(dataLine-1)
                         binUbExc = binLbInc+binWidth
-                    print("\t\tBin # "+ str(dataLine) + ": " + str(lhs-rhs) + "   ["+str(binLbInc)+","+str(binUbExc)+")")
+                    tol=1e-10
+                    if(abs(binLbInc)<tol):
+                        binLbInc=0e0
+                    if(abs(binUbExc)<tol):
+                        binUbExc=0e0
+                    row["value"]='%.6E' % Decimal(lhs-rhs)
+                    row["binMin"]='%.6E' % Decimal(binLbInc)
+                    row["binMax"]='%.6E' % Decimal(binUbExc)
+                    #print(row)
+                    rows.append(dict(row))
+                    #print(rows)
+                    #print("\t\tBin # "+ str(dataLine) + ": " + str(lhs-rhs) + "   ["+str(binLbInc)+","+str(binUbExc)+")")
                     dataLine=dataLine+1
-    return pd.DataFrame()
-
-
-    
+    df = pd.DataFrame(rows)
+    # I don't necessarily care about column order, but making it match up with
+    # the test data here is easier than getting the assert to deal with it
+    df = df[['ID','name','binMin','binMax','region','value','isUnderflow','isOverflow','nbins','xmin','xmax','nEvents','normEwEvents','nEntries','normEwEntries','sumWeightsSq','sumValWeight','sumValSqWeight']]
+    return(df)  
