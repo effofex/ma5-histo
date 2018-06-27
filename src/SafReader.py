@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import re
 
 def read(fileLoc):
@@ -57,8 +58,8 @@ def read(fileLoc):
                     readState=HISTO
                     print("Found histogram")
             # A <Histo> tag can contain <Description>, <Statistics>, or <Data>
-            # tags. Without imposing order, detect when those tags crop up or
-            # when the <Histo> element closes
+            # tags. Detect when those tags crop up or when the <Histo> element 
+            # closes
             elif(readState == HISTO):
                 if(re.search('</Histo>', l)):
                     readState=NONHISTO
@@ -90,6 +91,7 @@ def read(fileLoc):
                     print("\tStatistics")
                 elif(re.search('<Data>', l)):
                     readState=DATA
+                    dataLine=0
                     print("\tData")
             # Handle a <Description> element. Assumes we  go back to a parent
             # <Histo> element when done.
@@ -165,11 +167,26 @@ def read(fileLoc):
             # <Histo> element when done.
             elif(readState == DATA):
                 if(re.search('</Data>', l)):
+                    # at the end of the data element, we should have everything
+                    # we need to write out a row for the dataframe, so let'saf
+                    # store it in a dictionary, then add that to our collection
+                    #TODO
                     readState=HISTO
                     print("\tEnded Data")
                 else:
                     lhs,rhs = map(float,l.split()[0:2])
-                    #print(lhs-rhs)
+                    binWidth = ((float(xmax)-float(xmin))/float(nbins))
+                    if(dataLine==0):
+                        binLbInc = -1*np.inf
+                        binUbExc = float(xmin)
+                    elif(dataLine>float(nbins)):
+                        binLbInc = float(xmax)
+                        binUbExc = np.inf
+                    else:
+                        binLbInc = float(xmin)+binWidth*(dataLine-1)
+                        binUbExc = binLbInc+binWidth
+                    print("\t\tBin # "+ str(dataLine) + ": " + str(lhs-rhs) + "   ["+str(binLbInc)+","+str(binUbExc)+")")
+                    dataLine=dataLine+1
     return pd.DataFrame()
 
 
