@@ -22,12 +22,21 @@ def read(fileLoc):
     # builtin XML parser isn't going to do the trick either, so let's try
     # a finite state machine approach first.
     
+    # Overall goal is to populate a collection of dictionaries, with keys
+    # corresponding to columns in our target pandas dataframe
     NONHISTO    = 1
     HISTO       = 2
     DESC        = 3
     STATS       = 4
     DATA        = 5
     
+    # both description and stats have some formatting too
+    # to avoid nested state machines, we'll start with just keeping
+    # track of line numbers.
+    descLine =  0
+    statsLine = 0
+    
+
     readState = NONHISTO
     #TODO handle unavailable files
     with open(fileLoc) as fh:
@@ -35,6 +44,8 @@ def read(fileLoc):
             # We could be more elegant, for example do this as a dictionary 
             # mapping of states and parse funcs.  
             #First, let's just bang out a solution
+            
+
             
             # Start in a state where we know we're not within a <Histo> tag
             # usually this means the SAF header or footer
@@ -51,9 +62,19 @@ def read(fileLoc):
                     print("Ended histogram")
                 elif(re.search('<Description>', l)):
                     readState=DESC
+                    # need to reset the line # of the description
+                    # thus the entanglement of a large FSM begins
+                    descLine = 0
+                    hName = ""      # name of current histogram
+                    nbins = 0       # number of bins in current histogram 
+                    xmin = 0        # min value in current histogram
+                    xmax = 0        # max value in current histogram
+                    regions = ""    # region name (this is probaby underspecefiied)
+
                     print("\tDesc")
                 elif(re.search('<Statistics>', l)):
                     readState=STATS
+                    statsLine = 0
                     print("\tStatistics")
                 elif(re.search('<Data>', l)):
                     readState=DATA
@@ -65,7 +86,27 @@ def read(fileLoc):
                     readState=HISTO
                     print("\tEnded Desc")
                 else:
-                    todo = True    
+                    # description elements contain a few lines, each of which
+                    # describe different bits of the histogram. For a rough
+                    # implementation, we just keep track of the line # we're
+                    # on, and parse accordingly
+                    
+                    #TODO handle cases where these assumptions don't work
+                    if(descLine==0):
+                        m=re.search('"(.*)"',l)
+                        hName = m.group(1)
+                        descLine=1
+                    elif(descLine==1):
+                        descLine=2
+                    elif(descLine==2):
+                        nbins,xmin,xmax=l.split()
+                        descLine=3
+                    elif(descLine==3):
+                        descLine=4
+                    elif(descLine==4):
+                        regions = l.split()[0]
+                        print(regions)
+                        descLine=5
             # Handle a <Statistics> element. Assumes we  go back to a parent
             # <Histo> element when done.
             elif(readState == STATS):
