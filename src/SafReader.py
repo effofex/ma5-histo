@@ -74,7 +74,16 @@ def read(fileLoc):
                     print("\tDesc")
                 elif(re.search('<Statistics>', l)):
                     readState=STATS
+                    
+                    # similar element-level state reset as with description
                     statsLine = 0
+                    nEvents = 0
+                    normEwEvents = 0    # sum of event-weights over events
+                    nEntries = 0
+                    normEwEntries= 0    # sum of event-weights over entries
+                    sumWeightsSq = 0    # sum weights^2
+                    sumValWeight = 0    # sum value*weight
+                    sumValSqWeight = 0  # sum value^2*weight
                     print("\tStatistics")
                 elif(re.search('<Data>', l)):
                     readState=DATA
@@ -114,7 +123,43 @@ def read(fileLoc):
                     readState=HISTO
                     print("\tEnded Statistics")
                 else:
-                    todo = True    
+                    # statistics elements are multi-line, handle similar to
+                    # description elements
+                    
+                    # TODO handle cases where these assumptions don't work
+                    # TODO find out from @lemouth if we're handling second col 
+                    # correctly
+                    if(statsLine==0):
+                       lhs,rhs = map(int,l.split()[0:2])
+                       nEvents = lhs-rhs
+                       print("nEvents: " + str(nEvents))                        
+                    elif(statsLine==1):
+                       lhs,rhs = map(float,l.split()[0:2])
+                       normEwEvents = lhs - rhs
+                       print("normEwEvents: " + str(normEwEvents))
+                    elif(statsLine==2):
+                       lhs,rhs = map(int,l.split()[0:2])
+                       nEntries = lhs - rhs
+                       print("nEntries: " + str(nEntries)) 
+                    elif(statsLine==3):
+                       lhs,rhs = map(float,l.split()[0:2])
+                       normEwEntries = lhs - rhs
+                       print("normEwEntries: " + str(normEwEntries))
+                    elif(statsLine==4):
+                       lhs,rhs = map(float,l.split()[0:2])
+                       sumWeightsSq = lhs - rhs
+                       print("sumWeightsSq: " + str(sumWeightsSq)) 
+                    elif(statsLine==5):
+                       lhs,rhs = map(float,l.split()[0:2])
+                       sumValWeight = lhs - rhs
+                       print("sumValWeight: " + str(sumValWeight)) 
+                    elif(statsLine==6):
+                       lhs,rhs = map(float,l.split()[0:2])
+                       sumValSqWeight = lhs - rhs
+                       print("sumValSqWeight: " + str(sumValSqWeight)) 
+                    statsLine=statsLine+1
+                    
+            #TODO retain diagnostic prints as 'verbose' output option?
             # Handle a <Data> element. Assumes we  go back to a parent
             # <Histo> element when done.
             elif(readState == DATA):
