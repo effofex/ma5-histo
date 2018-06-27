@@ -13,3 +13,5 @@ def test_read_saf():
     testDf = pd.read_csv("test\\data\\example_histos.csv")
     safDf  = sr.read("test\\data\\example_histos.saf")
     assert(testDf.equals(safDf))
+
+# TODO almost certainly want to test for graceful errors on malformed *.saf
