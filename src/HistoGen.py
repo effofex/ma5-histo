@@ -51,9 +51,11 @@ def build_histograms(df,writeFiles=False,outdir=".",verbose=False,terse=False):
         plt.hist(df[df.ID==h].binlabel,bins=df[df.ID==h].binMin,weights=df[df.ID==h].value)
         plt.title(df[df.ID==h].name.unique())
         if(writeFiles):
-            plt.savefig('Fig_'+str(figno)+'.png', bbox_inches='tight')
+            # TODO handle exceptions on not being able to write
+            # Should also be smarter about using os path tools to build path
+            plt.savefig(outdir+'\\Fig_'+str(figno)+'.png', bbox_inches='tight')
             if(verbose):
-                print("Wrote " + 'Fig_'+str(figno)+'.png') 
+                print("Wrote " + outdir+'\\Fig_'+str(figno)+'.png') 
         figs.append((f,df[df.ID==h]))
         figno=figno+1
     if(terse):
