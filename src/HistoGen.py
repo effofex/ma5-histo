@@ -14,6 +14,8 @@ if __name__ == "__main__":
     parser.add_argument('-t','--terse', action='store_true', help='Provide some  output during run (default is silent)')
     parser.add_argument('-v','--version', action='version', version='%(prog)s '+version)
     args = parser.parse_args()
-
-    print("Hello")
-    sr.read("test\\data\\example_histos.saf")
+    
+    #print(args)
+    #print(args.infile)
+    # Parse the file and store as a tidy dataframe
+    safDf = sr.read(args.infile)
