@@ -3,6 +3,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
+import seaborn as sns
 
 import SafReader as sr
 
@@ -79,4 +80,4 @@ if __name__ == "__main__":
     # Parse the file and store as a tidy dataframe
     # probably a much better way to handle verbose/terse flags, but this works
     safDf = sr.read(args.infile,args.verbose,args.terse)
-    build_histograms(safDf,writeFiles=True,verbose=args.verbose,terse=args.terse)
+    build_histograms(safDf,writeFiles=True,outdir=args.outdir,verbose=args.verbose,terse=args.terse)
