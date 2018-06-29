@@ -50,9 +50,15 @@ def build_histograms(df,writeFiles=False,outdir=".",verbose=False,terse=False):
         # reproduce it
         plt.hist(df[df.ID==h].binlabel,bins=df[df.ID==h].binMin,weights=df[df.ID==h].value)
         plt.title(df[df.ID==h].name.unique())
-        plt.savefig('Fig_'+str(figno)+'.png', bbox_inches='tight')
+        if(writeFiles):
+            plt.savefig('Fig_'+str(figno)+'.png', bbox_inches='tight')
+            if(verbose):
+                print("Wrote " + 'Fig_'+str(figno)+'.png') 
         figs.append((f,df[df.ID==h]))
         figno=figno+1
+    if(terse):
+        action = "Wrote " if writeFiles else "Built "
+        print(action + str(figno-1)+ " histograms.") 
     return(figs)
     
 # Running as a script
@@ -71,4 +77,4 @@ if __name__ == "__main__":
     # Parse the file and store as a tidy dataframe
     # probably a much better way to handle verbose/terse flags, but this works
     safDf = sr.read(args.infile,args.verbose,args.terse)
-    build_histograms(safDf)
+    build_histograms(safDf,writeFiles=True,verbose=args.verbose,terse=args.terse)

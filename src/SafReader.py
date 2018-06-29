@@ -222,6 +222,8 @@ def read(fileLoc,verbose=False,terse=False):
                         print(".", end='')
                     rows.append(dict(row))
                     dataLine=dataLine+1
+    if terse:
+        print('\n', end='')
     df = pd.DataFrame(rows)
     # I don't necessarily care about column order, but making it match up with
     # the test data here is easier than getting the assert to deal with it
