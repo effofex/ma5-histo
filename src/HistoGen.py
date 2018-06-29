@@ -24,7 +24,7 @@ def build_histograms(df,writeFiles=False,outdir=".",verbose=False,terse=False):
     terse -- provide minimal output while working
     
     Returns:
-    A collection matplotlib figures
+    A collection tuples (matplotlib figures and associated df)
     """
     # make life easier by representing relevant columns in df as floats
     floatCols=['binMin', 'binMax', 'value']
@@ -80,4 +80,9 @@ if __name__ == "__main__":
     # Parse the file and store as a tidy dataframe
     # probably a much better way to handle verbose/terse flags, but this works
     safDf = sr.read(args.infile,args.verbose,args.terse)
-    build_histograms(safDf,writeFiles=True,outdir=args.outdir,verbose=args.verbose,terse=args.terse)
+    od = args.outdir if (args.outdir) else "."
+    figlist = build_histograms(safDf,writeFiles=True,outdir=od,verbose=args.verbose,terse=args.terse)
+     
+    #Esample of using returned collection of tuples
+    #for fig,df in figlist:
+    #   print(fig.gca())
