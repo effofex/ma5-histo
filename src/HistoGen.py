@@ -3,6 +3,7 @@ import SafReader as sr
 
 version = "0.0.1"
 
+    
 # Running as a script
 if __name__ == "__main__":
     # Handle CLI arguments
@@ -14,8 +15,7 @@ if __name__ == "__main__":
     parser.add_argument('-t','--terse', action='store_true', help='Provide some  output during run (default is silent)')
     parser.add_argument('-v','--version', action='version', version='%(prog)s '+version)
     args = parser.parse_args()
-    
-    #print(args)
-    #print(args.infile)
+   
     # Parse the file and store as a tidy dataframe
-    safDf = sr.read(args.infile)
+    # probably a much better way to handle verbose/terse flags, but this works
+    safDf = sr.read(args.infile,args.verbose,args.terse)
