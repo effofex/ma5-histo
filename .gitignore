@@ -3,3 +3,5 @@
 
 test/data/out.csv
 *.ipynb_checkpoints*
+
+*.pyc
